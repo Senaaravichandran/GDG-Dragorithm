@@ -22,13 +22,47 @@ import StatCard from "../components/common/StatCard";
 import AlertOverviewChart from "../components/overview/AlertOverviewChart";
 import CategoryDistributionChart from "../components/overview/CategoryDistributionChart";
 import SalesChannelChart from "../components/overview/AlertSourcesChart";
-import dashboardStats from "./dashboardStats.json";
+
 import { Player } from "@lottiefiles/react-lottie-player";
 import CaseMap from "./CaseMap";
 import { useNavigate } from "react-router-dom";
 import { MapPin } from "lucide-react";
 
 const OverviewPage = () => {
+  const dashboardStats = [
+  {
+    "name": "Total Cameras",
+    "value": 244
+  },
+  {
+    "name": "Pending Alerts",
+    "value": 2
+  },
+  {
+    "name": "Critical Alerts",
+    "value": 1
+  },
+  {
+    "name": "Active Cameras",
+    "value": 235
+  },
+  {
+    "name": "Total Alerts Today",
+    "value": 59
+  },
+  {
+    "name": "Offline Cameras",
+    "value": 15
+  },
+  {
+    "name": "Cameras with Active Alerts",
+    "value": 40
+  },
+  {
+    "name": "Resolved Alerts",
+    "value": 40
+  }
+]
   const navigate = useNavigate();
 
   const [showCaseMap, setShowCaseMap] = useState(false);

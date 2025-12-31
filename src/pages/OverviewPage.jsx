@@ -22,7 +22,7 @@ import StatCard from "../components/common/StatCard";
 import AlertOverviewChart from "../components/overview/AlertOverviewChart";
 import CategoryDistributionChart from "../components/overview/CategoryDistributionChart";
 import SalesChannelChart from "../components/overview/AlertSourcesChart";
-import dashboardStats from "../../../backend/data/dashboardStats.json";
+import dashboardStats from "../data/dashboardStats.json";
 import { Player } from "@lottiefiles/react-lottie-player";
 import crypto from "crypto";
 import CaseMap from "./CaseMap";
@@ -122,32 +122,10 @@ const OverviewPage = () => {
 
     initializeWallet();
 
-    const fetchCaseCount = async () => {
-      try {
-        // Fetch alerts from MongoDB to see which cases actually exist
-        const alertsResponse = await fetch('http://localhost:5000/api/alerts');
-        if (!alertsResponse.ok) {
-          console.error("Failed to fetch alerts");
-          setAvailableCases([]);
-          return;
-        }
-        
-        const alertsData = await alertsResponse.json();
-        
-        // Filter alerts that have createdContract = true (have cases on blockchain)
-        const casesWithAlerts = alertsData
-          .filter(alert => alert.createdContract === true || alert.createdContract === "true")
-          .map((alert, index) => index); // Get their indices as case IDs
-        
-        setAvailableCases(casesWithAlerts);
-        setCaseCount(casesWithAlerts.length);
-      } catch (error) {
-        console.error("Error fetching cases:", error);
-        setAvailableCases([]);
-      }
-    };
-
-    fetchCaseCount();
+    // Static case data for deployment (no backend required)
+    const staticCases = [0, 1, 2, 3, 4]; // Example static case IDs
+    setAvailableCases(staticCases);
+    setCaseCount(staticCases.length);
 
     // Listen for account changes
     if (window.ethereum) {
@@ -183,7 +161,7 @@ const OverviewPage = () => {
 
   const [evidenceFile, setEvidenceFile] = useState(null);
 
-  // Modified handleEvidenceSubmit to upload to IPFS first
+  // Modified handleEvidenceSubmit - static version for deployment
   const handleEvidenceSubmit = async (e) => {
     e.preventDefault();
 
@@ -205,60 +183,43 @@ const OverviewPage = () => {
     try {
       setIsLoading(true);
       
-      const formData = new FormData();
-      formData.append("image", evidenceFile);
-
-      // Upload to IPFS
-      const uploadRes = await fetch("http://localhost:5000/api/upload", {
-        method: "POST",
-        body: formData
-      });
-
-      const uploadData = await uploadRes.json();
-
-      if (!uploadData.success) {
-        throw new Error(uploadData.message || "Upload failed");
-      }
-
-      // Use firebaseUrl (new) or cid (legacy) as the media hash
-      const mediaHash = uploadData.firebaseUrl || uploadData.url || uploadData.cid;
-      console.log("Uploaded evidence URL:", mediaHash);
-
-      // Add to blockchain
-      const blockchainRes = await fetch(
-        `http://localhost:5000/api/cases/case/${selectedCaseId}/evidence`,
-        {
-          method: "POST",
-          headers: { "Content-Type": "application/json" },
-          body: JSON.stringify({
+      // For static deployment, simulate evidence submission
+      // In production, you would upload to IPFS or cloud storage
+      const reader = new FileReader();
+      reader.onloadend = async () => {
+        try {
+          // Simulate blockchain transaction
+          const mediaHash = `static_evidence_${Date.now()}`;
+          
+          console.log("Evidence submitted:", {
+            caseId: selectedCaseId,
             mediaHash,
             description: evidenceDescription,
             dateTime: new Date().toISOString()
-          })
+          });
+
+          alert("Evidence added successfully (static mode)!");
+          
+          // Notify CaseMap
+          window.dispatchEvent(new CustomEvent('evidenceAdded', { 
+            detail: { caseId: selectedCaseId } 
+          }));
+          
+          setShowEvidenceModal(false);
+          setEvidenceDescription("");
+          setEvidenceImage(null);
+          setEvidenceFile(null);
+        } catch (error) {
+          console.error("Error:", error);
+          alert("Failed: " + error.message);
+        } finally {
+          setIsLoading(false);
         }
-      );
-
-      const blockchainData = await blockchainRes.json();
-      
-      if (!blockchainData.success) {
-        throw new Error(blockchainData.message || "Blockchain failed");
-      }
-
-      alert("Evidence added successfully!");
-      
-      // Notify CaseMap
-      window.dispatchEvent(new CustomEvent('evidenceAdded', { 
-        detail: { caseId: selectedCaseId } 
-      }));
-      
-      setShowEvidenceModal(false);
-      setEvidenceDescription("");
-      setEvidenceImage(null);
-      setEvidenceFile(null);
+      };
+      reader.readAsDataURL(evidenceFile);
     } catch (error) {
       console.error("Error:", error);
       alert("Failed: " + error.message);
-    } finally {
       setIsLoading(false);
     }
   };
@@ -283,31 +244,14 @@ const OverviewPage = () => {
     }
 
     try {
-      const response = await fetch(
-        `http://localhost:5000/api/cases/case/${selectedCaseId}/assign`,
-        {
-          method: "POST",
-          headers: {
-            "Content-Type": "application/json",
-          },
-          body: JSON.stringify({
-            authorityAddress: walletAddress,
-          }),
-        }
-      );
+      // Static version - simulate blockchain transaction
+      console.log("Authority assigned:", {
+        caseId: selectedCaseId,
+        authorityAddress: walletAddress,
+        timestamp: new Date().toISOString()
+      });
 
-      if (!response.ok) {
-        const errorData = await response.json();
-        throw new Error(errorData.message || "Failed to assign authority");
-      }
-
-      const result = await response.json();
-      
-      if (!result.success) {
-        throw new Error(result.message || "Failed to assign authority");
-      }
-
-      alert(`Authority successfully assigned to: ${walletAddress}`);
+      alert(`Authority successfully assigned to: ${walletAddress} (static mode)`);
       setWalletAddress("");
       setShowAssignModal(false);
     } catch (error) {
@@ -330,28 +274,14 @@ const OverviewPage = () => {
     }
 
     try {
-      const response = await fetch(
-        `http://localhost:5000/api/cases/case/${selectedCaseId}/close`,
-        {
-          method: "POST",
-          headers: {
-            "Content-Type": "application/json",
-          },
-        }
-      );
+      // Static version - simulate blockchain transaction
+      console.log("Case closed:", {
+        caseId: selectedCaseId,
+        closedBy: storedAccount,
+        timestamp: new Date().toISOString()
+      });
 
-      if (!response.ok) {
-        const errorData = await response.json();
-        throw new Error(errorData.message || "Failed to close case");
-      }
-
-      const result = await response.json();
-      
-      if (!result.success) {
-        throw new Error(result.message || "Failed to close case");
-      }
-
-      alert("Case closed successfully!");
+      alert("Case closed successfully (static mode)!");
     } catch (error) {
       console.error("Error closing case:", error);
       alert("Failed to close case: " + error.message);
